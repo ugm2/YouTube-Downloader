@@ -1,41 +1,69 @@
 from fastapi import FastAPI
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 from typing import List
 from pytube import YouTube
+from pathlib import Path
+import shutil
 
 app = FastAPI()
 
-allowed_formats = ['mp3']
+yt = None
+download_folder = Path("tmp/")
+download_folder.mkdir(parents=True, exist_ok=True)
 
 class Payload(BaseModel):
     url: str = None
-    download_format: str = 'mp3'
-
-    @validator('download_format')
-    def download_format_must_be_allowed(cls, v):
-        if v not in allowed_formats:
-            raise ValueError(f'must be one of these formats: {allowed_formats}')
-        return v
 
 class Stream(BaseModel):
     type: str = None
-    format: str = None
-    quality: str = None
+    mime_type: str = None
+    res: str = None
+    bitrate: str = None
     fps: str = None
-    codec: str = None
+    video_codec: str = None
+    audio_codec: str = None
 
 @app.post("/list_streams", response_model=List[Stream], status_code=200)
 def list_streams(payload: Payload):
+    global yt
     yt = YouTube(payload.url)
 
     streams = []
     for stream in yt.streams:
         streams += [Stream(
             type=stream.type,
-            format=stream.mime_type.split("/")[-1],
-            quality=stream.resolution if stream.type=="video" else stream.abr,
-            fps=stream.fps if stream.type=="video" else "",
-            codec=stream.video_codec if stream.type == "video" else stream.audio_codec 
+            mime_type=stream.mime_type,
+            res=stream.resolution if stream.type=="video" else None,
+            bitrate=stream.abr if stream.type=="audio" else None,
+            fps=stream.fps if stream.type=="video" else None,
+            video_codec=stream.video_codec if stream.type == "video" else None,
+            audio_codec=stream.audio_codec if stream.type == "audio" else None
         )]
 
     return streams
+
+@app.post("/download", response_model=str, status_code=200)
+def download(stream: Stream):
+    global yt
+
+    if yt:
+        ys = yt.streams.filter(
+            mime_type=stream.mime_type,
+            fps=stream.fps,
+            res=stream.res,
+            abr=stream.bitrate,
+            video_codec=stream.video_codec,
+            audio_codec=stream.audio_codec
+        )[0]
+
+        file_path = ys.download(
+            output_path=download_folder,
+            filename="downloaded_file",
+            )
+
+        return file_path
+    return None
+
+@app.on_event("shutdown")
+def shutdown():
+    shutil.rmtree(download_folder)
