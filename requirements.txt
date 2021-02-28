@@ -5,3 +5,4 @@ streamlit==0.76.0
 flake8==3.8.4
 pep8==1.7.1
 autopep8==1.5.5
+ffmpeg-python

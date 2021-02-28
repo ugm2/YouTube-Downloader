@@ -26,9 +26,10 @@ def get_streams(url):
     return result
 
 
-def download_video(data):
+def download_video(data, _format):
     response = requests.post(
         "http://localhost:5001/download",
+        params={'_format': _format},
         json=data
     )
 
@@ -59,6 +60,7 @@ def interface():
 
             df = df[df['mime_type'] == mime_type]
 
+            _format = None
             if video_type == "video":
                 audio = st.radio("Audio included", ["Yes", "No"])
                 is_progressive = True if audio == "Yes" else False
@@ -84,12 +86,21 @@ def interface():
                 audio_codec = st.selectbox("audio Codec", audio_codecs)
                 df = df[df['audio_codec'] == audio_codec]
 
+                _format = st.selectbox("Audio Format", [
+                    'mp3',
+                    'm4a',
+                    'wav',
+                    'aiff',
+                    'flac'
+                ])
+
+
             if not df.empty:
                 if st.button("Download"):
                     df.dropna(axis=1, inplace=True)
                     data = df.to_dict('records')[0]
                     gif_runner = st.image("assets/loading.gif")
-                    file_path = download_video(data)
+                    file_path = download_video(data, _format)
 
                     if file_path:
                         st.markdown(
