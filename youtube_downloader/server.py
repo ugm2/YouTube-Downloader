@@ -11,8 +11,10 @@ yt = None
 download_folder = Path("tmp/")
 download_folder.mkdir(parents=True, exist_ok=True)
 
+
 class Payload(BaseModel):
     url: str = None
+
 
 class Stream(BaseModel):
     type: str = None
@@ -25,6 +27,7 @@ class Stream(BaseModel):
     title: str = None
     itag: str = None
     progressive: bool = False
+
 
 @app.post("/list_streams", response_model=List[Stream], status_code=200)
 def list_streams(payload: Payload):
@@ -48,6 +51,7 @@ def list_streams(payload: Payload):
 
     return streams
 
+
 @app.post("/download", response_model=str, status_code=200)
 def download(stream: Stream):
     global yt
@@ -61,6 +65,7 @@ def download(stream: Stream):
 
         return file_path
     return None
+
 
 @app.on_event("shutdown")
 def shutdown():

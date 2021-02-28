@@ -2,3 +2,6 @@ git+https://github.com/nficano/pytube
 fastapi==0.63.0
 uvicorn==0.13.3
 streamlit==0.76.0
+flake8==3.8.4
+pep8==1.7.1
+autopep8==1.5.5
