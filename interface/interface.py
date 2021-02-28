@@ -79,13 +79,15 @@ def interface():
             if st.button("Download"):
                 df.dropna(axis=1, inplace=True)
                 data = df.to_dict('records')[0]
+                gif_runner = st.image("assets/loading.gif")
                 file_path = download_video(data)
 
                 if file_path:
                     st.markdown(
                         get_binary_file_downloader_html(
-                            file_path),
+                            file_path, "file to your PC"),
                             unsafe_allow_html=True)
+                    gif_runner.empty()
 
 
 

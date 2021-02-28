@@ -22,6 +22,7 @@ class Stream(BaseModel):
     fps: str = None
     video_codec: str = None
     audio_codec: str = None
+    title: str = None
 
 @app.post("/list_streams", response_model=List[Stream], status_code=200)
 def list_streams(payload: Payload):
@@ -37,7 +38,8 @@ def list_streams(payload: Payload):
             bitrate=stream.abr if stream.type=="audio" else None,
             fps=stream.fps if stream.type=="video" else None,
             video_codec=stream.video_codec if stream.type == "video" else None,
-            audio_codec=stream.audio_codec if stream.type == "audio" else None
+            audio_codec=stream.audio_codec if stream.type == "audio" else None,
+            title=yt.title
         )]
 
     return streams
@@ -58,7 +60,7 @@ def download(stream: Stream):
 
         file_path = ys.download(
             output_path=download_folder,
-            filename="downloaded_file",
+            filename=stream.title,
             )
 
         return file_path
