@@ -23,6 +23,8 @@ class Stream(BaseModel):
     video_codec: str = None
     audio_codec: str = None
     title: str = None
+    itag: str = None
+    progressive: bool = False
 
 @app.post("/list_streams", response_model=List[Stream], status_code=200)
 def list_streams(payload: Payload):
@@ -34,12 +36,14 @@ def list_streams(payload: Payload):
         streams += [Stream(
             type=stream.type,
             mime_type=stream.mime_type,
-            res=stream.resolution if stream.type=="video" else None,
-            bitrate=stream.abr if stream.type=="audio" else None,
-            fps=stream.fps if stream.type=="video" else None,
-            video_codec=stream.video_codec if stream.type == "video" else None,
-            audio_codec=stream.audio_codec if stream.type == "audio" else None,
-            title=yt.title
+            res=stream.resolution,
+            bitrate=stream.abr,
+            fps=stream.fps,
+            video_codec=stream.video_codec,
+            audio_codec=stream.audio_codec,
+            progressive=stream.is_progressive,
+            title=yt.title,
+            itag=stream.itag
         )]
 
     return streams
@@ -49,19 +53,11 @@ def download(stream: Stream):
     global yt
 
     if yt:
-        ys = yt.streams.filter(
-            mime_type=stream.mime_type,
-            fps=stream.fps,
-            res=stream.res,
-            abr=stream.bitrate,
-            video_codec=stream.video_codec,
-            audio_codec=stream.audio_codec
-        )[0]
-
+        ys = yt.streams.get_by_itag(stream.itag)
         file_path = ys.download(
             output_path=download_folder,
             filename=stream.title,
-            )
+        )
 
         return file_path
     return None

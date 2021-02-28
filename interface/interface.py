@@ -56,6 +56,10 @@ def interface():
             df = df[df['mime_type']==mime_type]
 
             if video_type == "video":
+                audio = st.radio("Audio included", ["Yes", "No"])
+                is_progressive = True if audio == "Yes" else False
+                df = df[df['progressive']==is_progressive]
+
                 resolutions = sorted(list(set(df['res'])), reverse=True)
                 resolution = st.selectbox("Resolution", resolutions)
                 df = df[df['res']==resolution]
@@ -76,18 +80,19 @@ def interface():
                 audio_codec = st.selectbox("audio Codec", audio_codecs)
                 df = df[df['audio_codec']==audio_codec]
 
-            if st.button("Download"):
-                df.dropna(axis=1, inplace=True)
-                data = df.to_dict('records')[0]
-                gif_runner = st.image("assets/loading.gif")
-                file_path = download_video(data)
+            if not df.empty:
+                if st.button("Download"):
+                    df.dropna(axis=1, inplace=True)
+                    data = df.to_dict('records')[0]
+                    gif_runner = st.image("assets/loading.gif")
+                    file_path = download_video(data)
 
-                if file_path:
-                    st.markdown(
-                        get_binary_file_downloader_html(
-                            file_path, "file to your PC"),
-                            unsafe_allow_html=True)
-                    gif_runner.empty()
+                    if file_path:
+                        st.markdown(
+                            get_binary_file_downloader_html(
+                                file_path, "file to your PC"),
+                                unsafe_allow_html=True)
+                        gif_runner.empty()
 
 
 
