@@ -1,9 +1,10 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 from pytube import YouTube
 from pathlib import Path
 import shutil
+import ffmpeg
 
 app = FastAPI()
 
@@ -24,8 +25,8 @@ class Stream(BaseModel):
     fps: str = None
     video_codec: str = None
     audio_codec: str = None
-    title: str = None
-    itag: str = None
+    title: str = Field(default=None, required=True)
+    itag: str = Field(default=None, required=True)
     progressive: bool = False
 
 
@@ -53,7 +54,7 @@ def list_streams(payload: Payload):
 
 
 @app.post("/download", response_model=str, status_code=200)
-def download(stream: Stream):
+def download(stream: Stream, _format: str = None):
     global yt
 
     if yt:
@@ -62,6 +63,17 @@ def download(stream: Stream):
             output_path=download_folder,
             filename=stream.title,
         )
+
+        # Convert to desired format
+        if _format:
+            try:
+                ffmpeg_file = ffmpeg.input(file_path)
+                audio = ffmpeg_file.audio
+                file_path = ''.join(file_path.split('.')[:-1]) + "." + _format
+                out_file = ffmpeg.output(audio, file_path)
+                out_file.run()
+            except Exception as e:
+                print(e)
 
         return file_path
     return None
